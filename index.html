@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rat Folder</title>
+    <link rel="stylesheet" href="./dist/style.bundle.css">
+    <script src="./dist/app.bundle.js"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tree-view-container">
+
+    </div>
+
+    <script>
+        var ratFolder; 
+        function init(json) {
+            ratFolder = new RatFolder(
+                document.querySelector("div.tree-view-container"),
+                false,
+                json
+            );
+        }
+
+        fetch("http://localhost:8000/paths")
+            .then(response => response.json(0))
+            .then(json => init(json))
+    </script>
+</body>
+
+</html>
