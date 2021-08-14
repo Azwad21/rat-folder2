@@ -1,104 +1,144 @@
 @use "../node_modules/bootstrap-icons/font/bootstrap-icons.css";
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap");
 
+:root {
+    --bootstrap-icons-woff2-url: url("./fonts/bootstrap-icons.woff2");
+    --bootstrap-icons-woff-url: url("./fonts/bootstrap-icons.woff");
+}
+
 @font-face {
     font-family: "bootstrap-icons";
-    src: url("./fonts/bootstrap-icons.woff2")
-            format("woff2"),
-        url("./fonts/bootstrap-icons.woff")
-            format("woff");
+    /* src: url("./fonts/bootstrap-icons.woff2") format("woff2"),
+        url("./fonts/bootstrap-icons.woff") format("woff"); */
+    src: var(--bootstrap-icons-woff2-url) format("woff2"),
+        var(--bootstrap-icons-woff-url) format("woff");
 }
 
 div.tree-view-container {
     // border: 1px solid rgba(0, 0, 0, 0.2);
+    // background-color: #1d1d1d;
+    // color: #fff;
     width: max-content;
 
     div.view-element {
         // width: max-content;
         // position: relative;
-        span.caret , span.folderIcon , span.fileIcon {
-            font-size: 12px;
-            font-weight: bolder;
+
+        &.file {
+            
+            &:focus {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.07);
+            }
+            // background-color: rgba(255, 255, 255, 0.2);
         }
 
-        &.file:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-        
-        &.rat-warning > span.textElement  {
+        &.rat-alert > span.textElement {
             border-left: 4px solid red;
             background-color: rgba(255, 0, 0, 0.05);
         }
 
-        &.rat-success > span.textElement  {
+        &.rat-success > span.textElement {
             border-left: 4px solid green;
             background-color: rgba(0, 255, 0, 0.05);
         }
 
-        &.rat-info > span.textElement  {
+        &.rat-info > span.textElement {
             border-left: 4px solid dodgerblue;
             background-color: rgba(0, 0, 255, 0.05);
         }
 
-        &.rat-notify > span.textElement  {
+        &.rat-warning > span.textElement {
             border-left: 4px solid gold;
             background-color: rgba(255, 215, 0, 0.05);
         }
     }
-    
+
     span.textElement {
         font-family: "Roboto", sans-serif;
         // border: 1px solid rgba(0, 0, 0, 0.2);
-        color: #0d0d0d;
+        // color: #0d0d0d;
         display: block;
-        padding: .2rem .8rem;
+        padding: 0.2rem 0.8rem;
         position: relative;
-        
+
         span.caret {
             position: absolute;
             top: 50%;
             left: 0;
             transform: translateY(-50%);
+            --iconColor: #2d2d2d;
         }
         span.folderIcon {
             position: absolute;
             top: 50%;
             left: 12px;
             transform: translateY(-50%);
+            --iconColor: #2d2d2d;
+
         }
         span.fileIcon {
             position: absolute;
             top: 50%;
             left: 0;
             transform: translateY(-50%);
+            --iconColor: #2d2d2d;
+
+            img {
+                width: 12px;
+            }
+
+        }
+
+        span.label {
+            --labelColor: #2d2d2d;
+            color: var(--labelColor);
+        }
+
+        span.caret,
+        span.folderIcon,
+        span.fileIcon {
+            font-size: 12px;
+            // font-weight: bold !important;
+
+            i {
+                color: var(--iconColor);
+            }
         }
     }
 
     div.folder {
         --left: 2px;
         --top: 0;
+        --gutterBackgroundColor: #2d2d2d;
         position: relative;
 
-        &::before , &::after {
+        &::before,
+        &::after {
             content: "";
             position: absolute;
             left: var(--left);
             opacity: 0;
-            transition: opacity .1s;
+            transition: opacity 0.1s;
         }
 
         &::before {
-            background-color: #0d0d0d;
+            border-radius: 2px;
             width: 1px;
             top: var(--top);
             bottom: 0;
+            background-color: var(--gutterBackgroundColor);
         }
 
         /* &.viewGutter::before , &.viewGutter::after {
             opacity: 1;
         } */
 
-        &.rat-hovered::before , &.rat-hovered::after {
+        &.rat-hovered::before,
+        &.rat-hovered::after {
             opacity: 1;
         }
 

@@ -5,15 +5,19 @@
   "scripts": {
     "rollup": "rollup -w -c ./rollup.config.js",
     "sass": "sass ./sass/style.scss:./dist/style.bundle.css --watch --style compressed",
-    "webpack": "webpack --progress"
+    "webpack": "webpack --progress",
+    "runMulti": "concurrently \"yarn rollup --compact\" \"yarn sass\" \"uglifyjs dist/app.bundle.js -o dist/app.bundle.minify.js -p bare_returns\" ",
+    "uglify": "uglifyjs dist/app.bundle.js -o dist/app.bundle.minify.js -p bare_returns -c"
   },
   "author": "Azwad",
   "license": "MIT",
   "devDependencies": {
+    "concurrently": "^6.2.1",
     "css-loader": "^6.2.0",
     "file-loader": "^6.2.0",
     "prettier": "^2.3.2",
     "rollup-plugin-scss": "3",
+    "rollup-plugin-terser": "^7.0.2",
     "style-loader": "^3.2.1",
     "webpack": "^5.48.0",
     "webpack-cli": "^4.7.2"
@@ -21,10 +25,12 @@
   "dependencies": {
     "@babel/core": "^7.14.8",
     "bootstrap-icons": "^1.5.0",
+    "chokidar": "^3.5.2",
     "path-parse": "^1.0.7",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-polyfill-node": "^0.7.0",
-    "sass": "^1.36.0"
+    "sass": "^1.36.0",
+    "uglify-js": "^3.14.1"
   }
 }
