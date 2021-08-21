@@ -1,4 +1,5 @@
 @use "../node_modules/bootstrap-icons/font/bootstrap-icons.css";
+@use "sass:color" as color;
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap");
 
 :root {
@@ -18,136 +19,430 @@ div.tree-view-container {
     // border: 1px solid rgba(0, 0, 0, 0.2);
     // background-color: #1d1d1d;
     // color: #fff;
+    // width: 300px;
+    // overflow: hidden;
+    position: relative;
     width: max-content;
 
-    div.view-element {
-        // width: max-content;
-        // position: relative;
+    div.rat-tree {
+        div.view-element {
+            // width: max-content;
+            // position: relative;
 
-        &.file {
-            
-            &:focus {
-                background-color: rgba(0, 0, 0, 0.05);
+            &.rat-element-edit-mode {
+                span.textElement {
+                    span.label {
+                        display: none;
+                    }
+
+                    input.rat-element-input {
+                        display: inline-block;
+                        width: clamp(40px, 50px, auto);
+                    }
+                }
+
             }
 
-            &:hover {
-                background-color: rgba(0, 0, 0, 0.07);
+            &.file {
+                
+                &:focus {
+                    background-color: rgba(0, 0, 0, 0.05);
+                }
+
+                &:hover {
+                    background-color: rgba(0, 0, 0, 0.07);
+                }
+                // background-color: rgba(255, 255, 255, 0.2);
             }
-            // background-color: rgba(255, 255, 255, 0.2);
+
+            &.rat-alert > span.textElement {
+                // border-left: 4px solid red;
+                background-color: #{color.adjust($color: red, $lightness: 45%)};
+
+                &::before {
+                    background-color: red;
+                }
+            }
+
+            &.rat-success > span.textElement {
+                // border-left: 4px solid green;
+                background-color: #{color.adjust($color: green, $lightness: 70%, $saturation: -50%)};
+
+                &::before {
+                    background-color: green;
+                }
+            }
+
+            &.rat-info > span.textElement {
+                // border-left: 4px solid dodgerblue;
+                background-color: #{color.adjust($color: dodgerblue, $lightness: 40%)};
+                &::before {
+                    background-color: dodgerblue;
+                }
+            }
+
+            &.rat-warning > span.textElement {
+                // border-left: 4px solid gold;
+                background-color: #{color.adjust($color: yellow, $lightness: 45%)};
+                &::before {
+                    background-color: gold;
+                }
+            }
         }
 
-        &.rat-alert > span.textElement {
-            border-left: 4px solid red;
-            background-color: rgba(255, 0, 0, 0.05);
+        span.textElement {
+            font-family: "Roboto", sans-serif;
+            // border: 1px solid rgba(0, 0, 0, 0.2);
+            // color: #0d0d0d;
+            display: block;
+            padding: 0.2rem 0.8rem;
+            position: relative;
+
+            input.rat-element-input {
+                display: none;
+            }
+
+            &::before {
+                position: absolute;
+                content: "";
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 2.5px;
+            }
+
+            span.caret {
+                position: absolute;
+                top: 50%;
+                left: 0;
+                transform: translateY(-50%);
+                --iconColor: #2d2d2d;
+            }
+            span.folderIcon {
+                position: absolute;
+                top: 50%;
+                left: 12px;
+                transform: translateY(-50%);
+                --iconColor: #2d2d2d;
+
+            }
+            span.fileIcon {
+                position: absolute;
+                top: 50%;
+                left: 0;
+                transform: translateY(-50%);
+                --iconColor: #2d2d2d;
+
+                img {
+                    width: 12px;
+                }
+
+            }
+
+            span.label {
+                --labelColor: #2d2d2d;
+                color: var(--labelColor);
+            }
+
+            span.caret,
+            span.folderIcon,
+            span.fileIcon {
+                font-size: 12px;
+                // font-weight: bold !important;
+
+                i {
+                    color: var(--iconColor);
+                }
+            }
         }
 
-        &.rat-success > span.textElement {
-            border-left: 4px solid green;
-            background-color: rgba(0, 255, 0, 0.05);
-        }
+        div.folder {
+            --left: 2px;
+            --top: 0;
+            --gutterBackgroundColor: #2d2d2d;
+            position: relative;
 
-        &.rat-info > span.textElement {
-            border-left: 4px solid dodgerblue;
-            background-color: rgba(0, 0, 255, 0.05);
-        }
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                left: var(--left);
+                opacity: 0;
+                transition: opacity 0.1s;
+            }
 
-        &.rat-warning > span.textElement {
-            border-left: 4px solid gold;
-            background-color: rgba(255, 215, 0, 0.05);
+            &::before {
+                border-radius: 2px;
+                width: 1px;
+                top: var(--top);
+                bottom: 0;
+                background-color: var(--gutterBackgroundColor);
+            }
+
+            /* &.viewGutter::before , &.viewGutter::after {
+                opacity: 1;
+            } */
+
+            &.rat-hovered::before,
+            &.rat-hovered::after {
+                opacity: 1;
+            }
+
+            & > div.view-element.active {
+                display: block;
+            }
+
+            & > div.view-element {
+                display: none;
+            }
         }
     }
 
-    span.textElement {
+    div.rat-tree-toolbar {
+        --hoverColor: rgba(0, 0, 0, 0.1);
         font-family: "Roboto", sans-serif;
-        // border: 1px solid rgba(0, 0, 0, 0.2);
-        // color: #0d0d0d;
-        display: block;
-        padding: 0.2rem 0.8rem;
-        position: relative;
+        display: grid;
+        grid-template-columns: 1fr auto;
 
-        span.caret {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            --iconColor: #2d2d2d;
-        }
-        span.folderIcon {
-            position: absolute;
-            top: 50%;
-            left: 12px;
-            transform: translateY(-50%);
-            --iconColor: #2d2d2d;
-
-        }
-        span.fileIcon {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            --iconColor: #2d2d2d;
-
-            img {
-                width: 12px;
-            }
-
+        span.rat-tree-root-label {
+            display: block;
+            padding: .3rem .5rem;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        span.label {
-            --labelColor: #2d2d2d;
-            color: var(--labelColor);
-        }
+        div.rat-tree-folder-controls {
+            align-self: center;
+            padding: .3rem .5rem;
 
-        span.caret,
-        span.folderIcon,
-        span.fileIcon {
-            font-size: 12px;
-            // font-weight: bold !important;
+            span.folder-control-icon {
+                border-radius: 4px;
+                padding: .15rem .25rem;
+                margin-right: .3rem;
+                cursor: pointer;
 
-            i {
-                color: var(--iconColor);
+                &:last-of-type {
+                    margin-right: 0;
+                }
+
+                &:hover {
+                    background-color: var(--hoverColor);
+                }
             }
         }
     }
 
-    div.folder {
-        --left: 2px;
-        --top: 0;
-        --gutterBackgroundColor: #2d2d2d;
-        position: relative;
+    div.rat-tree-dialog-div {
+        --bg-color: #fff;
+        --fg-color: #000;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        // background-color: rgba(0, 0, 0, 0.2);
+        z-index: 2;
+        display: none;
 
-        &::before,
-        &::after {
-            content: "";
-            position: absolute;
-            left: var(--left);
-            opacity: 0;
-            transition: opacity 0.1s;
-        }
-
-        &::before {
-            border-radius: 2px;
-            width: 1px;
-            top: var(--top);
-            bottom: 0;
-            background-color: var(--gutterBackgroundColor);
-        }
-
-        /* &.viewGutter::before , &.viewGutter::after {
-            opacity: 1;
-        } */
-
-        &.rat-hovered::before,
-        &.rat-hovered::after {
-            opacity: 1;
-        }
-
-        & > div.view-element.active {
+        &.rat-dialog-active {
             display: block;
         }
 
-        & > div.view-element {
+        div.rat-tree-dialog {
+            position: absolute;
+            right: 2px;
+            left: 2px;
+            top: 50%;
+            transform: translateY(-50%) scaleY(0);
+            border-radius: 3px;
+            background-color: var(--bg-color);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            opacity: 0;
+            overflow: hidden;
+            z-index: 1;
+            border: 1px solid #bbb;
+
+            &.rat-dialog-active {
+                animation: dialog-intro ease-in-out .1s forwards;
+                opacity: 1;
+            }
+
+            span.rat-tree-dialog-label {
+                color: var(--fg-color);
+                // font-weight: bold;
+                font-family: "Roboto", sans-serif;
+                z-index: 2;
+            }
+
+            div.rat-tree-dialog-buttons {
+                z-index: 2;
+                display: grid;
+                grid-template-columns: auto auto;
+                gap: .5rem;
+
+                button.rat-tree-button-yes, button.rat-tree-button-no {
+                    --buttonBgColor: rgba(0, 0, 0, 0.05);
+                    --buttonFgColor: var(--fg-color);
+                    --buttonHoverBgColor: rgba(0, 0, 0, 0.1);
+                    --buttonHoverFgColor: var(--fg-color);
+                    display: inline-block;
+                    padding: .35rem .5rem;
+                    border: none;
+                    border-radius: 2px;
+                    background-color: var(--buttonBgColor);
+                    color: var(--buttonFgColor);
+                    font-weight: bold;
+
+                    /* &:hover {
+                        background-color: rgba(255, 255, 255, 0.15);
+                    } */
+
+                    &:hover {
+                        background-color: var(--buttonHoverBgColor);
+                        color: var(--buttonHoverFgColor);
+                        transition: background-color .1s;
+                    }
+                }
+            }
+
+            &.rat-dialog-success {
+                --bg-color: #{color.adjust($color: green, $lightness: 5%)};
+                --fg-color: #fff;
+                border: 1px solid transparent;
+
+                div.rat-tree-dialog-buttons {
+                    button.rat-tree-button-yes, button.rat-tree-button-no {
+                        --buttonHoverBgColor: rgb(255, 255, 255);
+                        --buttonHoverFgColor: var(--bg-color);
+                    }
+                }
+            }
+
+            &.rat-dialog-danger {
+                --bg-color: #{color.adjust($color: red, $lightness: 5%)};
+                --fg-color: #fff;
+                border: 1px solid transparent;
+
+                div.rat-tree-dialog-buttons {
+                    button.rat-tree-button-yes, button.rat-tree-button-no {
+                        --buttonHoverBgColor: rgb(255, 255, 255);
+                        --buttonHoverFgColor: var(--bg-color);
+                    }
+                }
+            }
+        }
+
+    }
+
+    div.rat-tree-notify-div {
+        position: absolute;
+        z-index: 2;
+        // background-color: yellow;
+        padding: .2rem .6rem;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        overflow: hidden;
+
+        &.rat-tree-notify-div-hide {
             display: none;
         }
+        
+        div.rat-tree-notify {
+            /* display: grid;
+            grid-template-columns: 1fr auto; */
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            // box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(-120%);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            animation: notify-intro ease-in-out .1s forwards;
+            display: none;
+            --width: 100%;
+
+            &.rat-tree-notify-danger {
+                background-color: #{color.adjust($color: red, $lightness: 40%)};
+                color: #{color.adjust($color: red, $blackness: 10%)};
+                border: 0;
+
+                button.rat-tree-close-button {
+                    background-color: #{color.adjust($color: red, $lightness: 40%)};
+                    color: #{color.adjust($color: red, $blackness: 10%)};
+                    border-left: 0;
+                }
+
+                &::before {
+                    background-color: red;
+                }
+            }
+
+            &.rat-tree-notify-success {
+                background-color: #{color.adjust($color: green, $lightness: 5%)};
+                color: #fff;
+                border: 0;
+
+                button.rat-tree-close-button {
+                    background-color: #{color.adjust($color: green, $lightness: 5%)};
+                    color: #fff;
+                    border-left: 0;
+                }
+
+                &::before {
+                    background-color: #{color.adjust($color: green, $blackness: 30%)};
+                }
+            }
+
+            &.rat-notify-show {
+                display: grid;
+                grid-template-columns: 1fr auto;
+            }
+
+
+
+            button.rat-tree-close-button {
+                border: none;
+                border-radius: 0;
+                border-left: 1px solid #ddd;
+                padding: .4rem;
+
+                &:hover {
+                    background-color: rgba(0, 0, 0, 0.05);
+                }
+            }
+
+            span.rat-tree-notify-label {
+                font-family: "Roboto", sans-serif;
+                font-size: 12px;
+                display: block;
+                padding: .4rem .8rem;
+                vertical-align: middle;
+            }
+        }
+
+    }
+}
+
+@keyframes dialog-intro {
+    to {
+        transform: translateY(-50%) scaleY(1);
+    }
+}
+
+@keyframes notify-intro {
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes notify-progress-timeout{
+    to {
+        width: 0;
     }
 }

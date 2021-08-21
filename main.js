@@ -1,32 +1,291 @@
 import pathParse from "path-parse";
+// var mime = require('mime-types');
+import mime from "mime-types"
+// console.log(mime);
 
 class RatFolder {
     constructor(rootElm = undefined, autoInit = true, path = undefined, type = "paths") {
         this.rootElm = rootElm;
         this.pathType = type;
+        this.path = path;
+        this.reservedNames = ["#", "<", ">", "$", "+", "%", "!", "`", "&", "*", "'", "|", "{", "?", "\"", "=", "}", "/", ":", "\\", "@"];
         if (this.rootElm == undefined) throw new Error("No root element specified");
 
         if (autoInit) {
             this.define();
         } else if (!autoInit) {
             if (path != undefined && path instanceof Object && Object.keys(path).length != 0) {
-                this.elm = this._parsePaths(path, document.createElement("div"));
-                this._resolvePathElement(this.elm, path);
-                this._addComputeElements(this.elm);
-                this._appendChild(this.elm);
-                this._setInitialStyle(this.elm);
-                this._setComputedStyles(this.elm);
-                this._addEvents(this.elm);
-                this._setGutters(this.elm);
+                this.elm = this._parsePaths(this.path, document.createElement("div"));
+                this.initialize(this.elm);
                 // this.alert("D:\\rat-folder2\\yarn.lock", "file");
                 // console.log(elm);
+                /*this.message("yarn.lock", "file").sendAlert();
+                this.message("minify.js", "file").sendWarn();
+                this.message("rollup.config.js", "file").sendSuccess();
+                this.message("package.json", "file").sendInfo();*/
+
 
             }
         }
     }
 
     define() {
-        console.log("define")
+        
+    }
+
+    initialize(elm = this.elm) {
+        this.rootPath = this.path.path.replaceAll("\\", "/");
+        this._resolvePathElement(elm, this.path);
+        this._addComputeElements(elm);
+        this._appendChild(elm);
+        this._setInitialStyle(elm);
+        this._setComputedStyles(elm);
+        this._addEvents(elm);
+        this._setGutters(elm);
+        this._addDialog(this.rootElm);
+        this._addToolbar(this.rootElm, elm.dataset.name);
+        this._addRatNotify(this.rootElm);
+    }
+
+    reset() {
+        if (type == "user-defined") {
+            console.warn("User defined trees cannot be reseted. (this feature will be available soon, Happy using this library!!!!)");
+            return;
+        }
+        this.rootElm.innerHTML = "";
+        
+        setTimeout(() => {
+            this.elm = this._parsePaths(this.path, document.createElement("div"));
+            this.initialize(this.elm);
+            this.notify("Tree reset succesfully.", 2000, "success")
+        }, 1500)
+    }
+
+    _addToolbar(elm, name = "root folder") {
+        const toolbarElm = document.createElement("div");
+        toolbarElm.classList.add("rat-tree-toolbar");
+
+        const spanRatTreeRootLabelElm = document.createElement("span");
+        spanRatTreeRootLabelElm.classList.add("rat-tree-root-label");
+        spanRatTreeRootLabelElm.innerText = name;
+
+        const divRatTreeFolderControlsElm = document.createElement("div");
+        divRatTreeFolderControlsElm.classList.add("rat-tree-folder-controls");
+
+        const folderButton = document.createElement("span");
+        folderButton.classList.add("folder-control-icon");
+
+        const I_element = document.createElement("i");
+        I_element.classList.add("bi");
+
+        const createFolderButton = folderButton.cloneNode(true);
+        const createFolderButton_I_element = I_element.cloneNode(true);
+        createFolderButton_I_element.classList.add("bi-folder-plus");
+        createFolderButton.appendChild(createFolderButton_I_element);
+
+        const createFileButton = folderButton.cloneNode(true);
+        const createFileButton_I_element = I_element.cloneNode(true);
+        createFileButton_I_element.classList.add("bi-file-earmark-plus-fill");
+        createFileButton.appendChild(createFileButton_I_element);
+
+        const refreshButton = folderButton.cloneNode(true);
+        const refreshButton_I_element = I_element.cloneNode(true);
+        refreshButton_I_element.classList.add("bi-arrow-clockwise");
+        refreshButton.appendChild(refreshButton_I_element);
+
+        divRatTreeFolderControlsElm.appendChild(createFolderButton);
+        divRatTreeFolderControlsElm.appendChild(createFileButton);
+        divRatTreeFolderControlsElm.appendChild(refreshButton);
+
+        toolbarElm.appendChild(spanRatTreeRootLabelElm);
+        toolbarElm.appendChild(divRatTreeFolderControlsElm);
+
+        elm.insertAdjacentElement("afterbegin", toolbarElm);
+    }
+
+    _addDialog(elm) {
+        const div_ratTreeDialogDivElement = document.createElement("div");
+        div_ratTreeDialogDivElement.classList.add("rat-tree-dialog-div");
+
+        const div_ratTreeDialogElement = document.createElement("div");
+        div_ratTreeDialogElement.classList.add("rat-tree-dialog");
+        div_ratTreeDialogElement.dataset.message = "to proceed your action ?";
+
+        div_ratTreeDialogDivElement.appendChild(div_ratTreeDialogElement);
+
+        const span_ratTreeDialogLabelElement = document.createElement("span");
+        span_ratTreeDialogLabelElement.classList.add("rat-tree-dialog-label");
+        span_ratTreeDialogLabelElement.innerHTML = `Are you sure you want <span>${div_ratTreeDialogElement.dataset.message}</span>`;
+
+        const div_ratTreeDialogButtonsElement = document.createElement("div");
+        div_ratTreeDialogButtonsElement.classList.add("rat-tree-dialog-buttons");
+
+        div_ratTreeDialogElement.appendChild(span_ratTreeDialogLabelElement);
+        div_ratTreeDialogElement.appendChild(div_ratTreeDialogButtonsElement);
+
+        const button_ratTreeYesElement = document.createElement("button");
+        button_ratTreeYesElement.classList.add("rat-tree-button-yes");
+        button_ratTreeYesElement.innerText = "Yes";
+
+        const button_ratTreeNoElement = document.createElement("button");
+        button_ratTreeNoElement.classList.add("rat-tree-button-no");
+        button_ratTreeNoElement.innerText = "No";
+
+        div_ratTreeDialogButtonsElement.appendChild(button_ratTreeYesElement);
+        div_ratTreeDialogButtonsElement.appendChild(button_ratTreeNoElement);
+
+        this.dialogElement = div_ratTreeDialogDivElement;
+        elm.appendChild(this.dialogElement);
+
+        const observer = new MutationObserver((mutationList) => {
+            mutationList.forEach(mutation => {
+                if (mutation.type == "attributes") {
+                    if (mutation.attributeName == "data-message") {
+                        this.dialogElement.querySelector("span.rat-tree-dialog-label span").innerText = 
+                            this.dialogElement.querySelector("div.rat-tree-dialog").dataset.message;
+                    }
+                }
+            })
+        })
+
+        observer.observe(this.dialogElement, {attributes: true, childList: true, subtree: true});
+    }
+
+    _addRatNotify(elm) {
+        const ratTreeNotifyDivElement = document.createElement("div");
+        ratTreeNotifyDivElement.classList.add("rat-tree-notify-div", "rat-tree-notify-div-hide");
+
+        const ratTreeNotifyElement = document.createElement("div");
+        ratTreeNotifyElement.classList.add("rat-tree-notify");
+
+        const ratTreeNotifyLabelElement = document.createElement("span");
+        ratTreeNotifyLabelElement.classList.add("rat-tree-notify-label");
+        ratTreeNotifyLabelElement.innerText = "Notification";
+
+        const ratTreeCloseButton = document.createElement("button");
+        ratTreeCloseButton.classList.add("rat-tree-close-button");
+        ratTreeCloseButton.innerHTML = "<i class=\"bi bi-x\"></i>";
+
+        ratTreeNotifyDivElement.appendChild(ratTreeNotifyElement);
+        ratTreeNotifyElement.appendChild(ratTreeNotifyLabelElement);
+        ratTreeNotifyElement.appendChild(ratTreeCloseButton);
+
+        this.notifyElement = ratTreeNotifyDivElement;
+
+        elm.appendChild(ratTreeNotifyDivElement);
+
+        ratTreeCloseButton.addEventListener("click", () => {
+            if (!this.notifyElement.classList.contains("rat-tree-notify-div-hide")) {
+                this.notifyElement.classList.add("rat-tree-notify-div-hide")
+            }
+
+            if (this.notifyElement.querySelector("div.rat-tree-notify").classList.contains("rat-notify-show")) {
+                this.notifyElement.querySelector("div.rat-tree-notify").classList.remove("rat-notify-show");
+            }
+        })
+    }
+
+    _toggleDialog() {
+        this.dialogElement.classList.toggle("rat-dialog-active");
+        this.dialogElement.querySelector("div.rat-tree-dialog").classList.toggle("rat-dialog-active");
+    }
+
+    dialog(type = "default") {
+        if (type == "default") {
+            if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-danger")) {
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-danger");
+            }
+
+            if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-success")) {
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-success");
+            }
+        } else if (type == "success") {
+            if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-danger")) {
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-danger");
+            }
+
+            this.dialogElement.querySelector("div.rat-tree-dialog").classList.add("rat-dialog-success")
+        } else if (type == "danger") {
+            if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-success")) {
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-success");
+            }
+
+            this.dialogElement.querySelector("div.rat-tree-dialog").classList.add("rat-dialog-danger")
+        }
+        // this.dialogElement.querySelector("div.rat-tree-dialog").classList.add("rat-dialog-danger")
+        if (this.dialogElement.classList.contains("rat-dialog-active")) {
+            if (type == "success") {
+                if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-danger")) {
+                    this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-danger");
+                }
+
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.add("rat-dialog-success");
+            } else if (type == "danger") {
+                if (this.dialogElement.querySelector("div.rat-tree-dialog").classList.contains("rat-dialog-success")) {
+                    this.dialogElement.querySelector("div.rat-tree-dialog").classList.remove("rat-dialog-success");
+                }
+
+                this.dialogElement.querySelector("div.rat-tree-dialog").classList.add("rat-dialog-danger");
+            } else if (type == "default") {
+                this._toggleDialog();
+                return;
+            }
+        } else if (!this.dialogElement.classList.contains("rat-dialog-active")) {
+            this._toggleDialog();
+        }
+
+        this.dialogPromise = new Promise((resolve, reject) => {
+            this.dialogElement.querySelector("button.rat-tree-button-yes").addEventListener("click", () => {
+                resolve((obj) => {
+                    this._toggleDialog();
+                });
+            });
+
+            this.dialogElement.querySelector("button.rat-tree-button-no").addEventListener("click", () => {
+                reject((obj) => {
+                    this._toggleDialog();
+                });
+            })
+        });
+
+        return this.dialogPromise;
+    }
+
+    notify(msg = "Notification", duration = 2000, type = "default") {
+
+        if (type == "success") {
+            this.notifyElement.querySelector("div.rat-tree-notify").classList.add("rat-tree-notify-success");
+        } else if (type == "danger") {
+            this.notifyElement.querySelector("div.rat-tree-notify").classList.add("rat-tree-notify-danger");
+        }
+
+        // console.log(this.notifyElement.querySelector("rat-tree-notify"));
+        this.notifyElement.style= "--duration:" + duration + "ms !important";
+        this.notifyElement.querySelector("span.rat-tree-notify-label").innerText = msg;
+
+        if (this.notifyElement.classList.contains("rat-tree-notify-div-hide")) {
+            this.notifyElement.classList.remove("rat-tree-notify-div-hide");
+        }
+
+        if (!this.notifyElement.querySelector("div.rat-tree-notify").classList.contains("rat-notify-show")) {
+            this.notifyElement.querySelector("div.rat-tree-notify").classList.add("rat-notify-show");
+        }
+
+        setTimeout(() => {
+            if (!this.notifyElement.classList.contains("rat-tree-notify-div-hide")) {
+                this.notifyElement.classList.add("rat-tree-notify-div-hide")
+            }
+
+            if (this.notifyElement.querySelector("div.rat-tree-notify").classList.contains("rat-notify-show")) {
+                this.notifyElement.querySelector("div.rat-tree-notify").classList.remove("rat-notify-show");
+            }
+            
+        }, duration);
+
+    }
+
+    changeDialogMessage(msg = this.dialogElement.querySelector("div.rat-tree-dialog").dataset.message, type = "default") {
+        this.dialogElement.querySelector("div.rat-tree-dialog").dataset.message = msg;
     }
 
     _parsePaths(path, elm) {
@@ -166,8 +425,17 @@ class RatFolder {
 
             span.appendChild(i_Element);
 
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = file.dataset.name;
+            input.classList.add("rat-element-input");
+
             if (!file.querySelector("span.textElement > span.fileIcon")) {
                 file.querySelector("span.textElement").insertAdjacentElement("afterbegin", span);
+            }
+
+            if (!file.querySelector("span.textElement > input.rat-element-input")) {
+                file.querySelector("span.textElement").appendChild(input);
             }
         })
     }
@@ -403,15 +671,9 @@ class RatFolder {
 
                     file.addEventListener("click", () => {
                         this.focusedFileElement = file;
-                        files.forEach(file2 => {
+                        /*files.forEach(file2 => {
                             file2.blur();
-                            /*if (file2.classList.contains("rat-focused")) {
-                                file2.classList.remove("rat-focused");
-                            }*/
-                        })
-                        /*if (!file.classList.contains("rat-focused")) {
-                            file.classList.add("rat-focused");
-                        }*/
+                        })*/
 
                         file.focus();
 
@@ -442,12 +704,14 @@ class RatFolder {
         var className;
         var blinkInterval;
 
+        const newPath = this.rootPath + "/" + path;
+
         if (type == "file") {
             const files = elm.querySelectorAll("[data-path].file");
 
             files.forEach(file => {
                 const dataPath = file.dataset.path;
-                if (dataPath == path) {
+                if (dataPath == newPath) {
                     targetElement = file;
                 }
             })
@@ -458,7 +722,7 @@ class RatFolder {
 
             folders.forEach(folder => {
                 const dataPath = folder.dataset.path;
-                if (dataPath == path) {
+                if (dataPath == newPath) {
                     targetElement = folder;
                 }
             })
@@ -494,7 +758,7 @@ class RatFolder {
         function turnOff() {
             if (targetElement) {
                 if (targetElement.classList.contains(className)) {
-                    targetElement.classList.remove(className)
+                    targetElement.classList.remove(className);
                 }
             }
         }
@@ -519,6 +783,12 @@ class RatFolder {
             targetElement.classList.toggle(className);
         }
 
+        function timeout(timeout = 1000) {
+            setTimeout(() => {
+                turnOff();
+            }, timeout)
+        }
+
         return {
             path,
             blink,
@@ -527,273 +797,17 @@ class RatFolder {
             sendAlert,
             sendWarn,
             sendSuccess,
-            sendInfo
+            sendInfo,
         }
     }
 
     refresh(eventAdder = true, elm = this.elm) {
         this._addComputeElements(elm);
         this._setComputedStyles(elm);
+        this._setGutters(elm);
         // if (eventAdder == true) {
             this._addEvents(elm);
         // }
-    }
-
-    addFile(referencePath, referencePathType, config, type, cb) {
-        if (referencePathType == "file") {
-            if (type == "file") {
-                const files = this.elm.querySelectorAll("[data-path].file");
-                files.forEach(file => {
-                    const parent = file.parentElement;
-                    const src = file.dataset.path.replaceAll("\\", "/");
-
-                    if (src == referencePath.replaceAll("\\", "/")) {
-                        // console.log(file)
-                        const name = config.name || null;
-                        if (name == null) {
-                            console.error("Please give a name for the file");
-                            return;
-                        }
-                        const fileExtension = config.extension || null;
-
-                        for (const children of parent.children) {
-                            if (children.classList.contains("file")) {
-                                if (children.dataset.name == name) {
-                                    console.error("A file with same name exists.");
-                                    return;
-                                }
-                            }
-                        }
-
-                        const fileElement = document.createElement("div");
-                        fileElement.classList.add("file", "view-element");
-
-                        if (parent.classList.contains("rat-opened")) {
-                            fileElement.classList.add("active");
-                        }
-
-                        fileElement.dataset.name = name;
-                        fileElement.dataset.extension = fileExtension;
-                        fileElement.dataset.path = parent.dataset.path.replaceAll("/", "\\") + "\\" + name;
-                        fileElement.tabIndex = -1;
-
-                        const spanTextElement = document.createElement("span");
-                        spanTextElement.classList.add("textElement");
-
-                        const spanLabelElement = document.createElement("span");
-                        spanLabelElement.classList.add("label");
-                        spanLabelElement.innerText = name;
-
-                        spanTextElement.appendChild(spanLabelElement);
-                        fileElement.appendChild(spanTextElement);
-                        parent.appendChild(fileElement)
-                        this.refresh()
-                        // console.log(file.parentElement.children)
-
-
-                        const fileNames = [];
-                        const sortedElements = [];
-                        // fileNames.push(name)
-                        for (const children of parent.children) {
-                            if (children.classList.contains("file")) {
-                                fileNames.push(children.dataset.name);
-                                fileNames.sort();
-                            }
-                        }
-
-                        fileNames.forEach(fileName => {
-                            for (const children of parent.children) {
-                                if (children.classList.contains("file") && children.dataset.name == fileName) {
-                                    sortedElements.push(children.cloneNode(true));
-                                    children.remove()
-                                    // fileNames.sort();
-                                }
-                            }
-                        })
-
-                        sortedElements.forEach(elm => {
-                            parent.appendChild(elm)
-                        })
-
-                        const condition = cb()
-
-                        if (condition == false) {
-                            console.log(false)
-                            for (const children of parent.children) {
-                                if (children.classList.contains("file") && children.dataset.path == fileElement.dataset.path) {
-                                    children.remove();
-                                }
-                            }
-                        }
-
-                        // console.log(sortedElements)
-
-                    }
-                })
-            } else if (type == "folder") {
-                // console.log("sdgjlk")
-                const files = this.elm.querySelectorAll("[data-path].file");
-                files.forEach(file => {
-                    const parent = file.parentElement;
-                    const src = file.dataset.path.replaceAll("\\", "/");
-
-                    if (src == referencePath.replaceAll("\\", "/")) {
-                        // console.log(file);
-                        const name = config.name;
-
-                        for (const children of parent.children) {
-                            if (children.classList.contains("folder")) {
-                                if (name == children.dataset.name) {
-                                    console.error("A folder with same name exists.");
-                                    break;
-                                }
-                            }
-                        }
-
-                        const folderElement = document.createElement("div");
-                        folderElement.classList.add("folder", "view-element");
-                        folderElement.dataset.name = name;
-                        folderElement.dataset.path = parent.dataset.path.replaceAll("/", "\\") + "\\" + name;
-                        folderElement.tabIndex = -1;
-
-                        const spanTextElement = document.createElement("span");
-                        spanTextElement.classList.add("textElement");
-
-                        const spanLabelElement = document.createElement("span");
-                        spanLabelElement.classList.add("label");
-                        spanLabelElement.innerText = name;
-
-                        spanTextElement.appendChild(spanLabelElement);
-                        folderElement.appendChild(spanTextElement);
-
-                        if (parent.classList.contains("folder")) {
-                            parent.querySelector("span.textElement").insertAdjacentElement("afterend", folderElement);
-                            this.refresh();
-                        } else {
-                            parent.insertAdjacentElement("afterbegin", folderElement);
-                            this.refresh();
-                        }
-
-
-                        var folderNames = [];
-                        var folderElementNames = [];
-
-                        for (const children of parent.children) {
-                            if (children.classList.contains("folder")) {
-                                folderNames.push(children.dataset.name);
-                                folderNames.sort();
-                            }
-                        }
-
-                        folderNames.forEach(folderName => {
-                            for (const children of parent.children) {
-                                if (children.classList.contains("folder")) {
-                                    if (folderName == children.dataset.name) {
-                                        folderElementNames.unshift(children.cloneNode(true));
-                                        children.remove();
-                                    }
-                                }
-                            }
-                        })
-
-                        folderElementNames.forEach(folderElementName => {
-                            if (parent.classList.contains("folder")) {
-                                folderElementName.dataset.event = false;
-                                parent.querySelector("span.textElement").insertAdjacentElement("afterend", folderElementName);
-                                this.refresh();
-                            } else {
-                                folderElementName.dataset.event = false;
-                                parent.insertAdjacentElement("afterbegin", folderElementName);
-                                this.refresh();
-                            }
-                        })
-                    }
-                })
-            }
-            
-        } else if (referencePathType == "folder") {
-            if (type = "file") {
-                const folders = this.elm.querySelectorAll("[data-path].folder");
-                folders.forEach(folder => {
-                    const src = folder.dataset.path;
-                    const files = folder.children;
-
-                    if (referencePath == src) {
-                        var sameFileName = false;
-                        for (const file of files) {
-                            const fileName = file.dataset.name;
-                            if (file.classList.contains("file")) {
-                                // console.log(fileName);
-                                if (config.name == file.dataset.name) {
-                                    console.error("A file with same name exists.");
-                                    sameFileName = true;
-                                }
-                            }
-                        }
-                        if (sameFileName == true) return;
-
-                        if (config.name == undefined || config.extension == undefined) {
-                            if (!config.extension) console.warn("Please specify a file extension.");
-                            if (!config.name) console.warn("Please specify a file name.");
-                            return;
-                        }
-
-                        const configFileName = config.name;
-                        const configFileExtension = config.extension;
-
-                        const fileElement = document.createElement("div");
-                        fileElement.classList.add("file", "view-element");
-
-                        if (folder.classList.contains("rat-opened")) {
-                            fileElement.classList.add("active");
-                        }
-
-                        fileElement.dataset.name = configFileName;
-                        fileElement.dataset.extension = configFileExtension;
-                        fileElement.dataset.path = folder.dataset.path.replaceAll("/", "\\") + "\\" + configFileName;
-                        fileElement.tabIndex = -1;
-
-                        const spanTextElement = document.createElement("span");
-                        spanTextElement.classList.add("textElement");
-
-                        const spanLabelElement = document.createElement("span");
-                        spanLabelElement.classList.add("label");
-                        spanLabelElement.innerText = configFileName;
-
-                        spanTextElement.appendChild(spanLabelElement);
-                        fileElement.appendChild(spanTextElement);
-                        folder.appendChild(fileElement)
-                        this.refresh()
-
-                        var fileElementNames = [];
-                        var elements = [];
-
-                        for (const file of files) {
-                            if (file.classList.contains("file")) {
-                                fileElementNames.push(file.dataset.name);
-                                fileElementNames.sort();
-                            }
-                        }
-
-                        fileElementNames.forEach(name => {
-                            for (const file of files) {
-                                if (file.classList.contains("file") && file.dataset.name == name) {
-                                    elements.push(file);
-
-                                    /*if (folder.querySelector("span.textElement")) {
-                                        folder.a
-                                    }*/
-                                }
-                            }
-                        })
-
-                        // console.log(elements);
-                        // console.log("ksdghjdfsh")
-
-                    }
-                })
-            }
-        }
     }
 
     _createFileElement(name, ext, path) {
@@ -814,15 +828,161 @@ class RatFolder {
         spanLabelElement.classList.add("label");
         spanLabelElement.innerText = name;
 
+        const input = document.createElement("input");
+        input.type = "text";
+        input.classList.add("rat-element-input");
+
+        spanTextElement.appendChild(input);
         spanTextElement.appendChild(spanLabelElement);
         fileElement.appendChild(spanTextElement);
+
 
         return fileElement;
     }
 
-    addFile2(referencePath, referencePathType, config, cb) {
-        if (referencePathType == "file") {
-            const newPath = referencePath.replaceAll("\\", "/");
+    _createInputFileElement() {
+        // console.log("element", name, ext, path);
+        const fileElement = document.createElement("div");
+        fileElement.classList.add("file", "view-element", "rat-element-edit-mode");
+        // fileElement.dataset.name = name;
+        // fileElement.dataset.extension = ext;
+        fileElement.dataset.event = false;
+
+        const spanTextElement = document.createElement("span");
+        spanTextElement.classList.add("textElement");
+
+        const input = document.createElement("input");
+        input.tabIndex = -1;
+        input.type = "text";
+        input.classList.add("rat-element-input");
+
+        spanTextElement.appendChild(input);
+        fileElement.appendChild(spanTextElement);
+
+        function promise() {
+            return new Promise((resolve, reject) => {
+                input.addEventListener("keyup", (e) => {
+                    if (e.code == "Enter") {
+                        resolve([input.value, () => {
+                            fileElement.remove();
+                        }]);
+                    } else if (e.code == "Escape") {
+                        reject();
+                    }
+                })
+            })
+        }
+
+        return {
+            fileElement,
+            promise
+        };
+    }
+
+    _createFolderElement(name, path) {
+        // console.log("element", name, ext, path);
+        const folderElement = document.createElement("div");
+        folderElement.classList.add("folder", "view-element");
+        folderElement.dataset.name = name;
+        folderElement.dataset.path = path;
+        folderElement.dataset.pathWindows = path.replaceAll("/", "\\");
+        folderElement.dataset.event = false;
+        folderElement.tabIndex = -1;
+
+        const spanTextElement = document.createElement("span");
+        spanTextElement.classList.add("textElement");
+
+        const spanLabelElement = document.createElement("span");
+        spanLabelElement.classList.add("label");
+        spanLabelElement.innerText = name;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = name;
+        input.classList.add("rat-element-input");
+
+        spanTextElement.appendChild(input);
+        spanTextElement.appendChild(spanLabelElement);
+        folderElement.appendChild(spanTextElement);
+
+        return folderElement;
+    }
+
+    addFile(referencePath, referencePathType, config, cb) {
+        if (referencePath == "/" && referencePathType == "root") {
+           try {
+               var root = this.elm;
+
+               if (root == null || undefined) {
+                   console.warn(`Reference path(${referencePath}) cannot find the element.`);
+                   return;
+               };
+
+               if (!config.name || !config.extension) {
+                    console.warn("A file name or extension was not given. PLease specify it.");
+                    return;
+               }
+
+               if (!config.name.includes(config.extension)) {
+                    console.error("Given extension doesn't exists in the name. PLease specify it properly.");
+                    return;
+               }
+
+               const configName = config.name;
+               const configExtension = config.extension;
+
+               const fileElement = this._createFileElement(configName, configExtension, root.dataset.path + "/" + configName);
+
+               for (const children of root.children) {
+                   if (children.classList.contains("file") && fileElement.dataset.name == children.dataset.name) {
+                       console.error("A file with same name exists.");
+                       return;
+                   }
+               }
+
+               const fileElementNames = [];
+               fileElementNames.push(fileElement.dataset.name);
+
+               for (const children of root.children) {
+                   if (children.classList.contains("file")) {
+                       fileElementNames.push(children.dataset.name);
+                       fileElementNames.sort();                        
+                   }
+               }
+
+               const nextFileElementName = fileElementNames[fileElementNames.indexOf(fileElement.dataset.name) + 1];
+
+               if (nextFileElementName != undefined) {
+                   root.querySelector(`[data-name="${nextFileElementName}"].file`)
+                   .insertAdjacentElement("beforebegin", fileElement);
+                   this.refresh();
+               } else if (nextFileElementName == undefined) {
+                   root.appendChild(fileElement);
+                   this.refresh();
+               }
+
+               if (cb != undefined && cb(
+                   fileElement,
+                   root, 
+                   {
+                       referencePath,
+                       computedReferencePath: this.rootPath, 
+                       path: fileElement.dataset.path, 
+                       fileName: fileElement.dataset.name, 
+                       fileExtension: fileElement.dataset.extension
+                   }) == "remove-element") {
+                   fileElement.remove();
+               }
+
+               // console.log(parentElement.querySelector(`[data-name="${nextFileElementName}"].file`))
+               // console.log(fileElementNames, nextFileElementName);
+
+           } catch (err) {
+               // console.warn(`Reference path(${referencePath}) cannot find the element.`)
+               console.log(err)
+           } 
+        } else if (referencePathType == "file") {
+            const newPath = this.rootPath + "/" + referencePath.replaceAll("\\", "/");
             try {
                 var file = this.elm.querySelector(`[data-path="${newPath}"].file`);
 
@@ -834,7 +994,7 @@ class RatFolder {
                 })
 
                 if (file == null || undefined) {
-                    console.warn(`Reference path(${referencePath}) cannot find the element.`);
+                    console.warn(`Reference path<${referencePath}> cannot find the element.`);
                     return;
                 };
                 const { parentElement } = file;
@@ -880,6 +1040,19 @@ class RatFolder {
                     this.refresh();
                 }
 
+                if (cb != undefined && cb(
+                    fileElement,
+                    parentElement, 
+                    {
+                        referencePath,
+                        computedReferencePath: this.rootPath + "/" + referencePath.replaceAll("\\", "/"), 
+                        path: fileElement.dataset.path, 
+                        fileName: fileElement.dataset.name, 
+                        fileExtension: fileElement.dataset.extension
+                    }) == "remove-element") {
+                    fileElement.remove();
+                }
+
                 // console.log(parentElement.querySelector(`[data-name="${nextFileElementName}"].file`))
                 // console.log(fileElementNames, nextFileElementName);
 
@@ -887,6 +1060,435 @@ class RatFolder {
                 // console.warn(`Reference path(${referencePath}) cannot find the element.`)
                 console.log(err)
             }
+        } else if (referencePathType == "folder") {
+            const newPath = this.rootPath + "/" + referencePath.replaceAll("\\", "/");
+            try {
+                var folder = this.elm.querySelector(`[data-path="${newPath}"].folder`);
+
+                this.elm.querySelectorAll(`[data-path].folder`).forEach(elm => {
+                    if (elm.dataset.path == newPath) {
+                        folder = elm;
+                        // console.log(file)
+                    }
+                })
+
+                if (folder == null || undefined) {
+                    console.warn(`Reference path(${referencePath}) cannot find the element.`);
+                    return;
+                };
+
+                if (!config.name || !config.extension) {
+                    console.warn("A file name or extension was not given. PLease specify it.");
+                    return;
+                }
+                const configName = config.name;
+                const configExtension = config.extension;
+
+                const fileElement = this._createFileElement(configName, configExtension, folder.dataset.path + "/" + configName);
+
+                if (folder.classList.contains("rat-opened")) {
+                    fileElement.classList.add("active");
+                }
+
+                for (const children of folder.children) {
+                    if (children.classList.contains("file") && fileElement.dataset.name == children.dataset.name) {
+                        console.error("A file with same name exists.");
+                        return;
+                    }
+                }
+
+                const fileElementNames = [];
+                fileElementNames.push(fileElement.dataset.name);
+
+                for (const children of folder.children) {
+                    if (children.classList.contains("file")) {
+                        fileElementNames.push(children.dataset.name);
+                        fileElementNames.sort();                        
+                    }
+                }
+
+                const nextFileElementName = fileElementNames[fileElementNames.indexOf(fileElement.dataset.name) + 1];
+
+                if (nextFileElementName != undefined) {
+                    folder.querySelector(`[data-name="${nextFileElementName}"].file`)
+                    .insertAdjacentElement("beforebegin", fileElement);
+                    this.refresh();
+                } else if (nextFileElementName == undefined) {
+                    folder.appendChild(fileElement);
+                    this.refresh();
+                }
+
+                if (cb != undefined && cb(
+                    fileElement,
+                    folder, 
+                    {
+                        referencePath,
+                        computedReferencePath: this.rootPath + "/" + referencePath.replaceAll("\\", "/"), 
+                        path: fileElement.dataset.path, 
+                        fileName: fileElement.dataset.name, 
+                        fileExtension: fileElement.dataset.extension
+                    }) == "remove-element") {
+                    fileElement.remove();
+                }
+
+                // console.log(parentElement.querySelector(`[data-name="${nextFileElementName}"].file`))
+                // console.log(fileElementNames, nextFileElementName);
+
+            } catch (err) {
+                // console.warn(`Reference path(${referencePath}) cannot find the element.`)
+                console.log(err)
+            }
+        }
+    }
+
+    addFolder(referencePath, referencePathType, config, cb) {
+        if (referencePath == "/" && referencePathType == "root") {
+            const newPath = this.rootPath + "/" + referencePath;
+            
+            try {
+                if (!config.name) {
+                    console.warn("A file name or extension was not given. PLease specify it.");
+                    return;
+                }
+
+                const configName = config.name;
+
+                const folderElement = this._createFolderElement(configName, this.elm.dataset.path + "/" + configName);
+
+                for (const children of this.elm.children) {
+                    if (children.classList.contains("folder") && folderElement.dataset.name == children.dataset.name) {
+                        console.error("A folder with same name exists.");
+                        return;
+                    }
+                }
+
+                const folderElementNames = [];
+                folderElementNames.push(folderElement.dataset.name);
+
+                for (const children of this.elm.children) {
+                    if (children.classList.contains("folder")) {
+                        folderElementNames.push(children.dataset.name);
+                        folderElementNames.sort();                        
+                    }
+                }
+
+                const nextFolderElementName = folderElementNames[folderElementNames.indexOf(folderElement.dataset.name) + 1];
+
+                if (nextFolderElementName != undefined) {
+                    this.elm.querySelector(`[data-name="${nextFolderElementName}"].folder`)
+                    .insertAdjacentElement("beforebegin", folderElement);
+                    this.refresh();
+                } else if (nextFolderElementName == undefined) {
+                    const elms = [];
+                    for (const children of this.elm.children) {
+                        if (children.classList.contains("folder")) {
+                            elms.push(children);
+                        }
+                    }
+                    elms[elms.length - 1].insertAdjacentElement("afterend", folderElement);
+                    this.refresh();
+                }
+
+                if (cb != undefined && cb(
+                    folderElement,
+                    this.elm, 
+                    {
+                        referencePath,
+                        computedReferencePath: this.rootPath, 
+                        path: folderElement.dataset.path, 
+                        fileName: folderElement.dataset.name
+                    }) == "remove-element") {
+                    folderElement.remove();
+                }
+
+                // console.log(parentElement)
+            } catch (err) {
+                console.log(err)
+            }
+        } else if (referencePathType == "file") {
+            const newPath = this.rootPath + "/" + referencePath;
+            
+            try {
+                var file = this.elm.querySelector(`[data-path="${newPath}"].file`);
+
+                if (file == null || undefined) {
+                    console.warn(`Reference path <${referencePath}> cannot find the element.`);
+                    return;
+                };
+
+                const parentElement = file.parentElement;
+
+                if (!config.name) {
+                    console.warn("A file name or extension was not given. PLease specify it.");
+                    return;
+                }
+
+                const configName = config.name;
+                const configExtension = config.extension;
+
+                const folderElement = this._createFolderElement(configName, parentElement.dataset.path + "/" + configName);
+
+                if (parentElement.classList.contains("rat-opened")) {
+                    folderElement.classList.add("active");
+                }
+
+                for (const children of parentElement.children) {
+                    if (children.classList.contains("folder") && folderElement.dataset.name == children.dataset.name) {
+                        console.error("A folder with same name exists.");
+                        return;
+                    }
+                }
+
+                const folderElementNames = [];
+                folderElementNames.push(folderElement.dataset.name);
+
+                for (const children of parentElement.children) {
+                    if (children.classList.contains("folder")) {
+                        folderElementNames.push(children.dataset.name);
+                        folderElementNames.sort();                        
+                    }
+                }
+
+                const nextFolderElementName = folderElementNames[folderElementNames.indexOf(folderElement.dataset.name) + 1];
+
+                if (nextFolderElementName != undefined) {
+                    parentElement.querySelector(`[data-name="${nextFolderElementName}"].folder`)
+                    .insertAdjacentElement("beforebegin", folderElement);
+                    this.refresh();
+                } else if (nextFolderElementName == undefined) {
+                    const elms = [];
+                    for (const children of parentElement.children) {
+                        if (children.classList.contains("folder")) {
+                            elms.push(children);
+                        }
+                    }
+
+                    if (elms.length >= 1) {
+                        elms[elms.length - 1].insertAdjacentElement("afterend", folderElement);
+                    } else if (elms.length == 0) {
+                        parentElement.querySelector("span.textElement").insertAdjacentElement("afterend", folderElement);
+                    }
+                    this.refresh();
+                }
+
+                if (cb != undefined && cb(
+                    folderElement,
+                    parentElement, 
+                    {
+                        referencePath,
+                        computedReferencePath: this.rootPath + "/" + referencePath.replaceAll("\\", "/"), 
+                        path: folderElement.dataset.path, 
+                        fileName: folderElement.dataset.name
+                    }) == "remove-element") {
+                    folderElement.remove();
+                }
+
+                // console.log(parentElement)
+            } catch (err) {
+                console.log(err)
+            }
+        } else if (referencePathType == "folder") {
+            const newPath = this.rootPath + "/" + referencePath;
+            
+            try {
+                var folder = this.elm.querySelector(`[data-path="${newPath}"].folder`);
+
+                if (folder == null || undefined) {
+                    console.warn(`Reference path <${referencePath}> cannot find the element.`);
+                    return;
+                };
+
+                if (!config.name) {
+                    console.warn("A folder name or extension was not given. PLease specify it.");
+                    return;
+                }
+
+                const configName = config.name;
+
+                const folderElement = this._createFolderElement(configName, folder.dataset.path + "/" + configName);
+
+                if (folder.classList.contains("rat-opened")) {
+                    folderElement.classList.add("active");
+                }
+
+                for (const children of folder.children) {
+                    if (children.classList.contains("folder") && folderElement.dataset.name == children.dataset.name) {
+                        console.error("A folder with same name exists.");
+                        return;
+                    }
+                }
+
+                const folderElementNames = [];
+                folderElementNames.push(folderElement.dataset.name);
+
+                for (const children of folder.children) {
+                    if (children.classList.contains("folder")) {
+                        folderElementNames.push(children.dataset.name);
+                        folderElementNames.sort();                        
+                    }
+                }
+
+                const nextFolderElementName = folderElementNames[folderElementNames.indexOf(folderElement.dataset.name) + 1];
+
+                if (nextFolderElementName != undefined) {
+                    folder.querySelector(`[data-name="${nextFolderElementName}"].folder`)
+                    .insertAdjacentElement("beforebegin", folderElement);
+                    this.refresh();
+                } else if (nextFolderElementName == undefined) {
+                    const elms = [];
+                    for (const children of folder.children) {
+                        if (children.classList.contains("folder")) {
+                            elms.push(children);
+                        }
+                    }
+
+                    if (elms.length >= 1) {
+                        elms[elms.length - 1].insertAdjacentElement("afterend", folderElement);
+                    } else if (elms.length == 0) {
+                        folder.querySelector("span.textElement").insertAdjacentElement("afterend", folderElement);
+                    }
+                    this.refresh();
+                }
+
+                if (cb != undefined && cb(
+                    folderElement,
+                    folder, 
+                    {
+                        referencePath,
+                        computedReferencePath: this.rootPath + "/" + referencePath.replaceAll("\\", "/"), 
+                        path: folderElement.dataset.path, 
+                        folderName: folderElement.dataset.name
+                    }) == "remove-element") {
+                    folderElement.remove();
+                }
+
+                // console.log(parentElement)
+            } catch (err) {
+                console.log(err)
+            }
+        }
+    }
+
+    removeFile(path) {
+        const newPath = this.rootPath + "/" + path;
+        const fileElement = this.elm.querySelector(`[data-path="${newPath}"].file`);
+
+        if (fileElement == null || undefined) {
+            console.error(`Reference path <${newPath}> cannot find element.`);
+            return;
+        }
+
+        const { parentElement } = fileElement;
+        this.changeDialogMessage("to delete this file <" + fileElement.dataset.name + ">");
+        this.removedFileElementStats = {};
+
+        this.dialog().then(cb => {
+            fileElement.remove();
+            this.notify(`File removed <${fileElement.dataset.name}>`, 2000, "success");
+            cb();
+            this.changeDialogMessage();
+            this.removedFileElementStats = {
+                removedElement: fileElement,
+                parentElement,
+                path: fileElement.dataset.path
+            };
+        }).catch((cb) => {
+            this.notify(`<${fileElement.dataset.name}> was not removed`, 2000);
+            cb();
+            this.removedFileElementStats = {};
+        });
+
+    }
+
+    removeFolder(path) {
+        const newPath = this.rootPath + "/" + path;
+        const folderElement = this.elm.querySelector(`[data-path="${newPath}"].folder`);
+
+        if (folderElement == null || undefined) {
+            console.error(`Reference path <${newPath}> cannot find element.`);
+            return;
+        }
+
+        const { parentElement } = folderElement;
+
+        if (parentElement == null || undefined) {
+            parentElement = "root";
+        }
+
+        this.changeDialogMessage("to delete this folder <" + folderElement.dataset.name + ">");
+        this.removedFolderElementStats = {};
+
+        this.dialog().then(cb => {
+            folderElement.remove();
+            cb();
+            this.changeDialogMessage();
+            this.removedFolderElementStats = {
+                removedElement: folderElement,
+                parentElement,
+                path: folderElement.dataset.path
+            };
+        }).catch((cb) => {
+            cb();
+            this.removedFolderElementStats = {};
+        });
+    }
+
+    addFileWithin(referencePath, referencePathType, cb) {
+        if (referencePath == undefined) {
+            console.warn("Please specify a reference path.");
+            return;
+        }
+        const newPath = this.rootPath + "/" + referencePath;
+
+        const file = this.elm.querySelector(`[data-path="${newPath}"].file`);
+        const { parentElement } = file;
+
+        const { fileElement , promise } = this._createInputFileElement();
+
+        if (parentElement.classList.contains("folder") && parentElement.classList.contains("rat-opened")) {
+            fileElement.classList.add("active");
+        } 
+
+        if (parentElement.classList.contains("folder") && !parentElement.classList.contains("rat-opened")) {
+            parentElement.classList.add("rat-opened");
+            fileElement.classList.add("active");
+            for (const children of parentElement.children) {
+                if (children.classList.contains("view-element")) {
+                    children.classList.add("active");
+                }
+            }
+            fileElement.querySelector("span.textElement > input").focus();
+        }
+
+        if (referencePathType == "file") {
+
+            parentElement.appendChild(fileElement);
+
+            promise().then(([val, cb]) => {
+                this.reservedNames.forEach(i => {
+                    if (val.includes(i)) {
+                        this.notify(`<${val}> contains invalid character <${i}>.`, 2000, "danger");
+                        throw new Error(`<${val}> contains invalid character <${i}>.`);
+                    }
+                });
+
+                const fileName = val;
+                const ext = "." + val.split(".")[val.split(".").length - 1];
+                if (mime.lookup(ext) == false) {
+                    console.error(`<${ext}> is not a valid extension.`);
+                    cb();
+                    this.notify(`<${fileName}> has invalid extension.`, 2000, "danger");
+                    return;
+                };
+                this.addFile(referencePath, referencePathType, {name: fileName, extension: ext});
+                this.notify(`<${fileName}> added.`, 2000, "success");
+                cb();
+            })
+
+            // console.log(fileElement);
+            // console.log(parentElement);
+
+            this.refresh();
         }
     }
 

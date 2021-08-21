@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rat Folder</title>
     <link rel="stylesheet" href="./dist/style.bundle.css">
-    <script src="./dist/app.bundle.minify.js"></script>
+    <script src="./dist/app.bundle.js" defer></script>
     <style>
         body {
             min-height: 100vh;
@@ -19,7 +19,12 @@
 
 <body>
     <div class="tree-view-container">
-
+        <!-- <div class="rat-tree-notify-div">
+            <div class="rat-tree-notify rat-notify-show rat-tree-notify-danger">
+                <span class="rat-tree-notify-label">A test Notifiction</span>
+                <button class="rat-tree-close-button"><i class="bi bi-x"></i></button>
+            </div>
+        </div> -->
     </div>
 
     <script>
@@ -35,7 +40,19 @@
         fetch("http://localhost:8000/paths")
             .then(response => response.json(0))
             .then(json => init(json))
+
+            console.log("This message is rendered to ensure that the script is running;")
     </script>
 </body>
 
 </html>
+
+<!-- <div class="rat-tree-dialog-div">
+            <div class="rat-dialog-active rat-tree-dialog" data-message="to proceed your action ?">
+                <span class="rat-tree-dialog-label">Are you sure you want <span>to proceed your action ?</span></span>
+                <div class="rat-tree-dialog-buttons">
+                    <button class="rat-tree-yes">Yes</button>
+                    <button class="rat-tree-no">No</button>
+                </div>
+            </div>
+        </div> -->

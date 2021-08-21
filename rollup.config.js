@@ -1,8 +1,9 @@
-// import scss from 'rollup-plugin-scss';
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
+import rollupJson from "@rollup/plugin-json";
+// import commonjs from '@rollup/plugin-commonjs';
 import nodePolyfill from "rollup-plugin-polyfill-node";
-// import {terser} from 'rollup-plugin-terser';
+// import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
     input: './main.js',
@@ -19,6 +20,8 @@ export default {
             browser: true,
             preferBuiltins: true
         }),
+        rollupJson(),
+        // nodeResolve(),
         commonjs(),
         nodePolyfill()
         /* scss({
