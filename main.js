@@ -840,45 +840,6 @@ class RatFolder {
         return fileElement;
     }
 
-    _createInputFileElement() {
-        // console.log("element", name, ext, path);
-        const fileElement = document.createElement("div");
-        fileElement.classList.add("file", "view-element", "rat-element-edit-mode");
-        // fileElement.dataset.name = name;
-        // fileElement.dataset.extension = ext;
-        fileElement.dataset.event = false;
-
-        const spanTextElement = document.createElement("span");
-        spanTextElement.classList.add("textElement");
-
-        const input = document.createElement("input");
-        input.tabIndex = -1;
-        input.type = "text";
-        input.classList.add("rat-element-input");
-
-        spanTextElement.appendChild(input);
-        fileElement.appendChild(spanTextElement);
-
-        function promise() {
-            return new Promise((resolve, reject) => {
-                input.addEventListener("keyup", (e) => {
-                    if (e.code == "Enter") {
-                        resolve([input.value, () => {
-                            fileElement.remove();
-                        }]);
-                    } else if (e.code == "Escape") {
-                        reject();
-                    }
-                })
-            })
-        }
-
-        return {
-            fileElement,
-            promise
-        };
-    }
-
     _createFolderElement(name, path) {
         // console.log("element", name, ext, path);
         const folderElement = document.createElement("div");
@@ -1431,65 +1392,6 @@ class RatFolder {
             cb();
             this.removedFolderElementStats = {};
         });
-    }
-
-    addFileWithin(referencePath, referencePathType, cb) {
-        if (referencePath == undefined) {
-            console.warn("Please specify a reference path.");
-            return;
-        }
-        const newPath = this.rootPath + "/" + referencePath;
-
-        const file = this.elm.querySelector(`[data-path="${newPath}"].file`);
-        const { parentElement } = file;
-
-        const { fileElement , promise } = this._createInputFileElement();
-
-        if (parentElement.classList.contains("folder") && parentElement.classList.contains("rat-opened")) {
-            fileElement.classList.add("active");
-        } 
-
-        if (parentElement.classList.contains("folder") && !parentElement.classList.contains("rat-opened")) {
-            parentElement.classList.add("rat-opened");
-            fileElement.classList.add("active");
-            for (const children of parentElement.children) {
-                if (children.classList.contains("view-element")) {
-                    children.classList.add("active");
-                }
-            }
-            fileElement.querySelector("span.textElement > input").focus();
-        }
-
-        if (referencePathType == "file") {
-
-            parentElement.appendChild(fileElement);
-
-            promise().then(([val, cb]) => {
-                this.reservedNames.forEach(i => {
-                    if (val.includes(i)) {
-                        this.notify(`<${val}> contains invalid character <${i}>.`, 2000, "danger");
-                        throw new Error(`<${val}> contains invalid character <${i}>.`);
-                    }
-                });
-
-                const fileName = val;
-                const ext = "." + val.split(".")[val.split(".").length - 1];
-                if (mime.lookup(ext) == false) {
-                    console.error(`<${ext}> is not a valid extension.`);
-                    cb();
-                    this.notify(`<${fileName}> has invalid extension.`, 2000, "danger");
-                    return;
-                };
-                this.addFile(referencePath, referencePathType, {name: fileName, extension: ext});
-                this.notify(`<${fileName}> added.`, 2000, "success");
-                cb();
-            })
-
-            // console.log(fileElement);
-            // console.log(parentElement);
-
-            this.refresh();
-        }
     }
 
 }

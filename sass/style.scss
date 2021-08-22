@@ -427,6 +427,11 @@ div.tree-view-container {
         }
 
     }
+
+    div.rat-tree-dialogInput {
+        position: absolute;
+        z-index: 2;
+    }
 }
 
 @keyframes dialog-intro {

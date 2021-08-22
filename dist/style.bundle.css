@@ -5823,6 +5823,10 @@ div.tree-view-container div.rat-tree-notify-div div.rat-tree-notify span.rat-tre
   padding: 0.4rem 0.8rem;
   vertical-align: middle;
 }
+div.tree-view-container div.rat-tree-dialogInput {
+  position: absolute;
+  z-index: 1;
+}
 
 @keyframes dialog-intro {
   to {
